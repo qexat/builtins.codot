@@ -94,7 +94,7 @@ def range (:args in int) =
 def enumerate (iterable in _SupportsIteration) =
     let i = 0
     for el <- iterable
-        ·> {i; el} ~
+        ·> {i; *} ~
         i = {i; 1} :> add
 
 

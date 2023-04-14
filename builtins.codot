@@ -1,0 +1,146 @@
+include _internals__BUILDERS__ private
+include _internals__BUILTINS__ private
+include _internals__PROTOCOLS__ private
+include _internals__PYUTIL__ private
+include types private
+
+
+def and (left in _SupportsAnd, right in _SupportsAnd) =
+    {{left; right}; _get_truthness} :> map :> _and
+
+
+def or (left in _SupportsOr, right in _SupportsOr) =
+    {{left; right}; _get_truthness} :> map :> _or
+
+
+def xor (left in _SupportsXor, right in _SupportsXor) =
+    {{left; right}; _get_truthness} :> map :> _xor
+
+
+def not (something in _SupportsNot) =
+    something ·> _get_truthness ·> _not
+
+
+def eq (left in _SupportsPartCmp, right in _SupportsPartCmp) =
+    {left; right} :> _eq
+
+
+def ne (left in _SupportsPartCmp, right in _SupportsPartCmp) =
+    {left; right} :> _eq ·> not
+
+
+def gt (left in _SupportsFullCmp, right in _SupportsFullCmp) =
+    {left; right} :> _gt
+
+
+def lt (left in _SupportsFullCmp, right in _SupportsFullCmp) =
+    {left; right} :> _lt
+
+
+def ge (left in _SupportsFullCmp, right in _SupportsFullCmp) =
+    let args = {left; right}
+    if args :> eq
+        then > true
+        else > args :> gt
+
+
+def le (left in _SupportsFullCmp, right in _SupportsFullCmp) =
+    let args = {left; right}
+    if args :> eq
+        then > true
+        else > args :> lt
+
+
+def add (:args in _SupportsAdd) =
+    {"add"; args} :> _build_mathexpr :> _py_eval
+
+
+def sub (:args in _SupportsSub) =
+    {"sub"; args} :> _build_mathexpr :> _py_eval
+
+
+def mul (:args in _SupportsMul) =
+    {"mul"; args} :> _build_mathexpr :> _py_eval
+
+
+def div (:args in _SupportsDiv) =
+    {"div"; args} :> _build_mathexpr :> _py_eval
+
+
+def modulo (:args in _SupportsModulo) =
+    {"modulo"; args} :> _build_mathexpr :> _py_eval
+
+
+def eucldiv (:args in _SupportsEuclDiv) =
+    {"eucldiv"; args} :> _build_mathexpr :> _py_eval
+
+
+def divmod (:args in _SupportsEuclDiv) =
+    {args :> eucldiv; args :> modulo}
+
+
+def pos (something in _SupportsPos) =
+    something
+
+
+def neg (something in _SupportsNeg) =
+    {0; something} :> sub
+
+
+def range (:args in int) =
+    {"range"; args} :> _build_range
+
+
+def enumerate (iterable in _SupportsIteration) =
+    let i = 0
+    for el <- iterable
+        ·> {i; el} ~
+        i = {i; 1} :> add
+
+
+def map (iterable in _SupportsIteration, function in _SupportsMap) =
+    @let m in _map
+        ·= {function; iterable} :> _build_map
+        · run
+
+
+def filter (iterable in _SupportsIteration, function in _SupportsFilter) =
+    @let f in _filter
+        ·= {function; iterable} :> _build_filter
+        · run
+
+
+def fold (iterable in _SupportsIteration, function in _SupportsFold, initial in _IterableSubtype) =
+    @let r in _reduce
+        ·= {function; iterable; initial} :> _build_fold
+        · run
+
+
+def abs (x in number) =
+    if {x; 0} :> ge
+        then > x ·> pos
+        else > x ·> neg
+
+
+def bin (x in int) =
+    x ·> _PY_INT_from_int ·> _PY_bin ·> _PY_STR_to_str 
+
+
+def char (x in _ValidUnicodeInt) =
+    x ·> _PY_INT_from_int ·> _PY_chr ·> _PY_STR_to_str
+
+
+def eval (source in _SupportsEval) =
+    source ·> _fast_eval
+
+
+def exit (code in _ValidExitCode) =
+    code ·> _PY_INT_from_int ·> _PY_exit
+
+
+def hash (something in _Hashable) =
+    something ·> _PY_auto_from_auto ·> _PY_hash ·> _PY_INT_to_int
+
+
+def hex (x in int) =
+    x ·> _PY_INT_from_int ·> _PY_hex ·> _PY_STR_to_str
